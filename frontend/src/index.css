@@ -1,0 +1,131 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Black & White Theme */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 13%;
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 13%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 0%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+
+    /* Custom chat colors - Black & White */
+    --chat-user-bg: 0 0% 13%;
+    --chat-user-text: 0 0% 97%;
+    --chat-bot-bg: 0 0% 100%;
+    --chat-bot-text: 0 0% 13%;
+    --chat-bubble-border: 0 0% 85%;
+  }
+
+  .dark {
+    --background: 0 0% 13%;
+    --foreground: 0 0% 97%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 97%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 97%;
+    --primary: 0 0% 97%;
+    --primary-foreground: 0 0% 13%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 97%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 97%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 97%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 97%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+
+    /* Custom chat colors for dark mode - Black & White */
+    --chat-user-bg: 0 0% 97%;
+    --chat-user-text: 0 0% 13%;
+    --chat-bot-bg: 0 0% 20%;
+    --chat-bot-text: 0 0% 97%;
+    --chat-bubble-border: 0 0% 25%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Markdown content styles */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content strong {
+  @apply font-semibold text-chat-bot-text;
+}
+
+.markdown-content em {
+  @apply italic;
+}
+
+.markdown-content br {
+  @apply block;
+  content: "";
+  margin: 0.5em 0;
+}
+
+/* Better spacing for Arabic text */
+.markdown-content p {
+  @apply mb-2 last:mb-0;
+}
+
+/* Bullet point styling */
+.markdown-content {
+  white-space: pre-line;
+}
