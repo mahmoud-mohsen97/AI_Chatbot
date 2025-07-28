@@ -1,5 +1,5 @@
 # Use Python 3.12 slim image as base
-FROM python:3.12-slim as base
+FROM python:3.12-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -7,29 +7,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     PORT=8000
 
-# Install system dependencies including uv
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
-    software-properties-common \
     git \
-    && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
-
-# Add uv to PATH
-ENV PATH="/root/.cargo/bin:$PATH"
 
 # Create app directory
 WORKDIR /app
 
-# Copy dependency files from root directory
-COPY pyproject.toml uv.lock ./
+# Copy requirements first for better layer caching
+COPY backend/requirements.txt .
 
-# Install Python dependencies using uv
-RUN uv sync --frozen --no-dev
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy backend application code
-COPY backend/ ./
+# Copy application code
+COPY backend/ .
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash app \
@@ -45,5 +41,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the FastAPI app using uv
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"] 
+# Run the FastAPI app
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"] 
