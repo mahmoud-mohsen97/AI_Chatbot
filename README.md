@@ -1,6 +1,10 @@
-# AI Chatbot - Hospital Assistant
+# 🤖 AI Chatbot - Hospital Assistant
 
 A modern AI-powered hospital chatbot with a React frontend and FastAPI backend, featuring advanced conversation capabilities with LangGraph and retrieval-augmented generation (RAG).
+
+✅ **Production Ready** - Deployed and tested for remote access  
+🌐 **Multi-Platform** - Works on localhost, remote servers, and HTTPS domains  
+🔒 **Secure** - CORS-enabled with SSL/HTTPS support
 
 ## Features
 
@@ -44,24 +48,36 @@ The easiest way to run the entire application:
 1. **Set up environment:**
    ```bash
    cd AI_Chatbot
-   cp .env.example .env
-   # Edit .env and add your OpenAI API key
+   # Create .env file with your OpenAI API key
+   echo "OPENAI_API_KEY=your_openai_api_key_here" > .env
    ```
 
-2. **Run with the convenience script:**
+2. **Choose your deployment mode:**
+   
+   **Local Development:**
    ```bash
-   ./run.sh prod    # Production mode
-   # OR
-   ./run.sh dev     # Development mode with hot reload
+   ./run.sh dev
+   ```
+   
+   **Remote HTTP Deployment:**
+   ```bash
+   API_URL=http://your-server-ip:8000 ./run.sh deploy
+   ```
+   
+   **HTTPS Production Deployment:**
+   ```bash
+   API_URL=https://your-domain.com ./run.sh https
    ```
 
 3. **Access the application:**
-   - Frontend: `http://localhost:3000` (production) or `http://localhost:5173` (development)
-   - Backend API: `http://localhost:8000`
-   - API Documentation: `http://localhost:8000/docs`
+   - **Development:** http://localhost:3000
+   - **Remote:** http://your-server-ip:3000  
+   - **HTTPS:** https://your-domain.com
+   - **API Docs:** Your API URL + `/docs`
 
-4. **Other useful commands:**
+4. **Useful commands:**
    ```bash
+   ./run.sh status  # Check container status and connectivity
    ./run.sh logs    # View logs
    ./run.sh stop    # Stop all services
    ./run.sh clean   # Clean up containers and images

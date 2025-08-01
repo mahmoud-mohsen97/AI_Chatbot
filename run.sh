@@ -46,26 +46,25 @@ check_env() {
 
 # Function to show usage
 show_usage() {
-    echo -e "${GREEN}Usage: ./run.sh [COMMAND] [OPTIONS]${NC}"
+    echo -e "${GREEN}Usage: ./run.sh [COMMAND]${NC}"
     echo ""
     echo -e "${GREEN}Commands:${NC}"
-    echo -e "  ${BLUE}start${NC}      Start the application (build and run)"
-    echo -e "  ${BLUE}up${NC}         Start the application (build and run)"
-    echo -e "  ${BLUE}deploy${NC}     Start in production mode with custom API URL"
-    echo -e "  ${BLUE}build${NC}      Build Docker images"
+    echo -e "  ${BLUE}dev${NC}        Start in development mode (localhost)"
+    echo -e "  ${BLUE}deploy${NC}     Deploy for remote access (requires API_URL)"
+    echo -e "  ${BLUE}https${NC}      Deploy with HTTPS support (production)"
     echo -e "  ${BLUE}stop${NC}       Stop all services"
     echo -e "  ${BLUE}logs${NC}       Show logs from all services"
-    echo -e "  ${BLUE}clean${NC}      Stop and remove all containers and images"
+    echo -e "  ${BLUE}status${NC}     Show container status and connectivity"
+    echo -e "  ${BLUE}clean${NC}      Clean up containers and images"
     echo -e "  ${BLUE}help${NC}       Show this help message"
     echo ""
-    echo -e "${GREEN}Environment Variables:${NC}"
-    echo -e "  ${BLUE}API_URL${NC}    Set custom API URL (e.g., http://167.71.49.141:8000)"
+    echo -e "${GREEN}Deployment Examples:${NC}"
+    echo -e "  ./run.sh dev                                      # Local development"
+    echo -e "  API_URL=http://167.71.49.141:8000 ./run.sh deploy # Remote HTTP"
+    echo -e "  API_URL=https://aichatbot.sytes.net ./run.sh https # HTTPS with domain"
     echo ""
-    echo -e "${GREEN}Examples:${NC}"
-    echo -e "  ./run.sh start                                    # Local development"
-    echo -e "  API_URL=http://167.71.49.141:8000 ./run.sh deploy # Remote deployment"
-    echo -e "  API_URL=https://aichatbot.sytes.net ./run.sh deploy # Domain deployment"
-    echo -e "  ./run.sh stop                                     # Stop all services"
+    echo -e "${GREEN}Environment Variables:${NC}"
+    echo -e "  ${BLUE}API_URL${NC}    Backend API URL (required for deploy/https commands)"
 }
 
 # Function to set deployment environment
@@ -91,61 +90,109 @@ setup_deployment() {
 check_docker
 check_env
 
+# Function to show status
+show_status() {
+    echo -e "${GREEN}📊 Container Status:${NC}"
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep chatbot || echo "No chatbot containers running"
+    
+    echo -e "\n${GREEN}🔍 Connectivity Test:${NC}"
+    if curl -s -o /dev/null -w "Frontend: %{http_code}\n" http://localhost:3000 2>/dev/null; then
+        echo "✅ Frontend accessible"
+    else
+        echo "❌ Frontend not accessible"
+    fi
+    
+    if curl -s -o /dev/null -w "Backend: %{http_code}\n" http://localhost:8000/health 2>/dev/null; then
+        echo "✅ Backend accessible"
+    else
+        echo "❌ Backend not accessible"
+    fi
+}
+
 # Main logic
 case "${1:-help}" in
-    "start"|"up")
-        setup_deployment
-        echo -e "${GREEN}🚀 Starting application...${NC}"
+    "dev"|"start"|"up")
+        echo -e "${GREEN}🚀 Starting in development mode...${NC}"
+        export API_URL="http://localhost:8000"
         docker-compose up --build
-        echo -e "${GREEN}✅ Application started successfully!${NC}"
+        echo -e "${GREEN}✅ Development server started!${NC}"
         echo -e "${BLUE}📱 Frontend: http://localhost:3000${NC}"
         echo -e "${BLUE}🔧 Backend API: http://localhost:8000${NC}"
         echo -e "${BLUE}📖 API Docs: http://localhost:8000/docs${NC}"
         ;;
     "deploy")
-        setup_deployment "$2"
-        echo -e "${GREEN}🚀 Starting in production mode...${NC}"
+        if [ -z "$API_URL" ]; then
+            echo -e "${RED}❌ API_URL environment variable is required for deployment${NC}"
+            echo -e "${YELLOW}Example: API_URL=http://167.71.49.141:8000 ./run.sh deploy${NC}"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}🚀 Deploying for remote access...${NC}"
         echo -e "${BLUE}🌐 API URL: $API_URL${NC}"
         
-        # Export API_URL for docker-compose to use
+        # Export API_URL for docker-compose
         export API_URL
         
-        # Force rebuild with no cache to ensure fresh build with correct API URL
+        # Stop and clean for fresh build
         docker-compose down
+        echo -e "${YELLOW}🔨 Building with API_URL=$API_URL (this may take a few minutes)...${NC}"
         docker-compose build --no-cache
         docker-compose up -d
-        echo -e "${GREEN}✅ Application deployed successfully!${NC}"
         
-        # Extract hostname from API_URL for display
+        echo -e "${GREEN}✅ Deployment completed!${NC}"
+        
+        # Extract hostname for display
         HOSTNAME=$(echo "$API_URL" | sed -E 's|^https?://([^:/]+).*|\1|')
         PROTOCOL=$(echo "$API_URL" | sed -E 's|^(https?)://.*|\1|')
         
-        if [ "$HOSTNAME" != "localhost" ] && [ "$HOSTNAME" != "127.0.0.1" ]; then
-            echo -e "${BLUE}📱 Frontend: $PROTOCOL://$HOSTNAME:3000${NC}"
-            echo -e "${BLUE}🔧 Backend API: $API_URL${NC}"
-            echo -e "${BLUE}📖 API Docs: $API_URL/docs${NC}"
-        else
-            echo -e "${BLUE}📱 Frontend: http://localhost:3000${NC}"
-            echo -e "${BLUE}🔧 Backend API: http://localhost:8000${NC}"
-            echo -e "${BLUE}📖 API Docs: http://localhost:8000/docs${NC}"
-        fi
+        echo -e "${BLUE}📱 Frontend: $PROTOCOL://$HOSTNAME:3000${NC}"
+        echo -e "${BLUE}🔧 Backend API: $API_URL${NC}"
+        echo -e "${BLUE}📖 API Docs: $API_URL/docs${NC}"
+        
+        # Test connectivity
+        sleep 3
+        show_status
         ;;
-    "build")
-        echo -e "${GREEN}🔨 Building Docker images...${NC}"
-        docker-compose build
+    "https")
+        if [ -z "$API_URL" ]; then
+            echo -e "${RED}❌ API_URL environment variable is required for HTTPS deployment${NC}"
+            echo -e "${YELLOW}Example: API_URL=https://aichatbot.sytes.net ./run.sh https${NC}"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}🚀 Deploying with HTTPS support...${NC}"
+        echo -e "${BLUE}🌐 API URL: $API_URL${NC}"
+        
+        # Check if SSL certificates exist
+        if [ ! -d "./ssl" ] || [ ! -f "./ssl/cert.pem" ] || [ ! -f "./ssl/key.pem" ]; then
+            echo -e "${YELLOW}⚠️  SSL certificates not found in ./ssl/ directory${NC}"
+            echo -e "${YELLOW}Please set up SSL certificates first. See DEPLOYMENT.md for instructions.${NC}"
+            exit 1
+        fi
+        
+        export API_URL
+        docker-compose -f docker-compose.prod.yml up --build -d
+        echo -e "${GREEN}✅ HTTPS deployment completed!${NC}"
+        echo -e "${BLUE}📱 Frontend: $API_URL (port 443)${NC}"
+        echo -e "${BLUE}🔧 Backend API: $API_URL${NC}"
         ;;
     "stop")
         echo -e "${YELLOW}🛑 Stopping all services...${NC}"
         docker-compose down
+        docker-compose -f docker-compose.prod.yml down 2>/dev/null || true
         echo -e "${GREEN}✅ All services stopped${NC}"
         ;;
     "logs")
         echo -e "${GREEN}📋 Showing logs...${NC}"
         docker-compose logs -f
         ;;
+    "status")
+        show_status
+        ;;
     "clean")
         echo -e "${YELLOW}🧹 Cleaning up...${NC}"
         docker-compose down --rmi all --volumes --remove-orphans
+        docker-compose -f docker-compose.prod.yml down --rmi all --volumes --remove-orphans 2>/dev/null || true
         echo -e "${GREEN}✅ Cleanup completed${NC}"
         ;;
     "help"|*)
