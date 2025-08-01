@@ -7,8 +7,6 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     container_name: ai-chatbot-backend
-    ports:
-      - "8000:8000"
     environment:
       - PYTHONPATH=/app
       - PORT=8000
@@ -33,10 +31,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: ai-chatbot-frontend
-    ports:
-      - "3000:80"
     environment:
-      - VITE_API_URL=${API_URL:-http://localhost:8000}
+      - VITE_API_URL=${API_URL:-https://aichatbot.sytes.net}
     depends_on:
       - backend
     restart: unless-stopped
@@ -49,10 +45,27 @@ services:
     networks:
       - ai-chatbot-network
 
+  # Nginx reverse proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: ai-chatbot-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - ai-chatbot-network
+
 networks:
   ai-chatbot-network:
     driver: bridge
 
 volumes:
   chroma-data:
-    driver: local 
+    driver: local
