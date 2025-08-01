@@ -30,9 +30,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${API_URL:-https://aichatbot.sytes.net}
     container_name: ai-chatbot-frontend
-    environment:
-      - VITE_API_URL=${API_URL:-https://aichatbot.sytes.net}
     depends_on:
       - backend
     restart: unless-stopped
