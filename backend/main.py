@@ -34,7 +34,14 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:8080"],  # Frontend URLs
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:5173", 
+        "http://localhost:8080",
+        "http://167.71.49.141:3000",  # Remote server frontend
+        "https://aichatbot.sytes.net",  # Domain frontend
+        "*"  # Allow all origins for deployment flexibility
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

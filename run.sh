@@ -106,7 +106,14 @@ case "${1:-help}" in
         setup_deployment "$2"
         echo -e "${GREEN}🚀 Starting in production mode...${NC}"
         echo -e "${BLUE}🌐 API URL: $API_URL${NC}"
-        docker-compose up --build -d
+        
+        # Export API_URL for docker-compose to use
+        export API_URL
+        
+        # Force rebuild with no cache to ensure fresh build with correct API URL
+        docker-compose down
+        docker-compose build --no-cache
+        docker-compose up -d
         echo -e "${GREEN}✅ Application deployed successfully!${NC}"
         
         # Extract hostname from API_URL for display
